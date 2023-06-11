@@ -54,6 +54,12 @@ jobs:
         uses: actions/Checkout@v3
       - name: Set IP env variable
         run: echo SERVER_PUBLIC_IP=${{ needs.deploy-infra.outputs.SERVER_PUBLIC_IP }} >> %GITHUB_ENV
+      - name: Configure AWS credentials
+        id: setup-ecr-credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::982622562211:role/EC2-ECR-AUTO-LOGIN
+          aws-region: us-east-1
       - name: Login to AWS ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
@@ -65,6 +71,7 @@ jobs:
         run:  |-
           docker build -t $REGISTRY/$REPOSITRY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+        working-directory: ./nodeapp
       - name: Deploy docker image to EC2
         env:
           REGISTRY: ${{steps.login-ecr.outputs.registry}}
